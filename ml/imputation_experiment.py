@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -7,10 +8,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SILVER_PATH = PROJECT_ROOT / "data" / "silver" / "pm25_hourly.parquet"
 OUT_PATH = PROJECT_ROOT / "data" / "experiments" / "imputation_results.csv"
 
-GAP_LENGTHS = [1, 2, 3, 6, 9, 12, 24]
+GAP_LENGTHS = [1, 2, 3, 6, 9, 12, 15, 18, 24]
 TRIALS_PER_SENSOR = 6      # hidden blocks per sensor, per gap length
 MIN_OTHER_SENSORS = 3      # neighbours needed for the city-based methods
-rng = np.random.default_rng(42)  # fixed seed so results are reproducible
+SEED = int(sys.argv[1]) if len(sys.argv) > 1 else 42  # default keeps results reproducible
+rng = np.random.default_rng(SEED)
 
 silver = pd.read_parquet(SILVER_PATH)
 wide = silver.pivot(index="hour_start_utc", columns="sensor_id", values="value").sort_index()
