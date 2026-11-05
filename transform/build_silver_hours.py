@@ -58,7 +58,7 @@ negatives = int((raw["value"] < 0).sum())
 raw["is_negative"] = raw["value"] < 0
 
 # ---- 3. Expand each sensor onto a full hourly grid ----
-grids, summary, outside = [], [], 0
+grids, summary, outside, boundary_rows = [], [], 0, 0
 all_internal_gaps = []
 
 for sensor_id, g in raw.groupby("sensor_id"):
@@ -71,6 +71,11 @@ for sensor_id, g in raw.groupby("sensor_id"):
         freq="h",
     )
     g = g.set_index("hour_start_utc")
+    # The API returns one bucket that straddles the start of the window
+    # (it begins one hour before the grid). Trim it deliberately and count it.
+    boundary = g.index == (grid[0] - pd.Timedelta(hours=1))
+    boundary_rows += int(boundary.sum())
+    g = g[~boundary]
     outside += len(g.index.difference(grid))
 
     full = g.reindex(grid)
@@ -104,7 +109,8 @@ for sensor_id, g in raw.groupby("sensor_id"):
         "internal_gaps": len(internal),
         "longest_internal_gap": max(internal) if internal else 0,
     })
-
+# Fail loudly if anything other than the known boundary bucket is off-grid
+assert outside == 0, f"{outside} rows fall outside the hourly grid"
 silver = pd.concat(grids, ignore_index=True)
 summary = pd.DataFrame(summary)
 
@@ -116,6 +122,7 @@ summary.to_csv(SUMMARY_PATH, index=False)
 print("Rows read from bronze:", n_raw)
 print("Duplicate (sensor, hour) rows dropped:", dups)
 print("Rows outside the expected hourly grid:", outside)
+print("Boundary rows trimmed (bucket starts before the window):", boundary_rows)
 print("Negative PM2.5 values:", negatives)
 print("Working sensors:", len(summary))
 print("Working sensors per station (max):",
