@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: staging
+    schema: staging
+    tables:
+      - name: stg_pm25_hourly
+      - name: stg_weather_hourly
+      - name: stg_quarantine
+      - name: stg_sensors

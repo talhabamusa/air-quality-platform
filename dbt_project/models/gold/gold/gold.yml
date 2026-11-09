@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  - name: dim_city
+    description: One row per city, with the city centre and the weather grid point used for it.
+    columns:
+      - name: city_key
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_station
+    description: One row per monitoring station that has readings or quarantined readings.
+    columns:
+      - name: station_key
+        data_tests:
+          - unique
+          - not_null
+      - name: sensor_id
+        data_tests:
+          - unique
+          - not_null
+      - name: city_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_city')
+                field: city_key

@@ -1,0 +1,6 @@
+city,display_name,centre_lat,centre_lon,weather_grid_lat,weather_grid_lon
+delhi,Delhi,28.6139,77.2090,28.576448,77.18678
+mumbai,Mumbai,19.0760,72.8777,19.086115,72.85291
+kolkata,Kolkata,22.5726,88.3639,22.601053,88.31776
+bengaluru,Bengaluru,12.9716,77.5946,12.970123,77.56364
+chennai,Chennai,13.0827,80.2707,13.110721,80.24590

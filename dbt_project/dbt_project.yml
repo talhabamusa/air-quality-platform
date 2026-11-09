@@ -1,0 +1,13 @@
+name: air_quality
+version: "1.0.0"
+config-version: 2
+profile: air_quality
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  air_quality:
+    +materialized: table
