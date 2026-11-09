@@ -14,8 +14,9 @@ FLAT_RUN_MIN = 6        # identical consecutive hourly values
 SPIKE_MIN_VALUE = 300   # ug/m3
 SPIKE_RATIO = 4         # times the city median for the same hour
 MIN_CITY_SENSORS = 3    # sensors reporting that hour, needed for the spike rule
+DEAD_SENSOR_SHARE = 0.5  # a sensor is dead if more than this share of its readings are flagged
 
-RULES = ["range", "zero", "flat", "spike"]
+RULES = ["range", "zero", "flat", "spike", "dead_sensor"]
 
 
 def flat_mask(x, min_run):
@@ -51,6 +52,12 @@ flags["spike"] = (
 
 flags = flags.fillna(False).astype(bool)
 flags = flags.mul(observed, axis=0).astype(bool)       # only observed readings can be flagged
+
+# Sensor-level rule: if most of a sensor's readings are already flagged, drop the whole sensor
+flagged_n = flags.any(axis=1).groupby(df["sensor_id"]).transform("sum")
+observed_n = observed.groupby(df["sensor_id"]).transform("sum")
+flags["dead_sensor"] = (flagged_n / observed_n > DEAD_SENSOR_SHARE) & observed
+
 quarantined = flags.any(axis=1)
 
 reasons = pd.Series("", index=df.index)
