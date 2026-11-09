@@ -5,9 +5,9 @@ import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SILVER_DIR = PROJECT_ROOT / "data" / "silver"
-IN_PATH = SILVER_DIR / "pm25_hourly.parquet"
-OUT_PATH = SILVER_DIR / "pm25_hourly_imputed.parquet"
-GAPS_PATH = SILVER_DIR / "pm25_gaps.csv"
+IN_PATH = SILVER_DIR / "pm25_hourly_clean.parquet"
+OUT_PATH = SILVER_DIR / "pm25_hourly_imputed_clean.parquet"
+GAPS_PATH = SILVER_DIR / "pm25_gaps_clean.csv"
 
 # Rules chosen from the imputation experiment (gap lengths in hours)
 LINEAR_MAX = 2             # 1-2 h: linear interpolation
