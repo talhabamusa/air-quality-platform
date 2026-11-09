@@ -83,6 +83,7 @@ for city in city_of.unique():
                     records.append({
                         "city": city, "sensor_id": sid, "gap_hours": L, "method": method,
                         "mae": np.mean(np.abs(err)), "mse": np.mean(err ** 2),
+                        "bias": np.mean(err), "y_mean": float(np.mean(y)), 
                     })
 
 results = pd.DataFrame(records)
@@ -93,6 +94,7 @@ order = ["linear", "ffill", "hour_profile", "city_mean", "city_scaled", "city_an
 mae = results.pivot_table(index="method", columns="gap_hours", values="mae", aggfunc="mean").reindex(order)
 rmse = results.pivot_table(index="method", columns="gap_hours", values="mse", aggfunc="mean").reindex(order) ** 0.5
 trials = results[results["method"] == "linear"].groupby("gap_hours").size()
+
 
 print("Mean PM2.5 over the whole table (ug/m3):", round(float(np.nanmean(wide.to_numpy())), 1))
 print()
@@ -108,3 +110,22 @@ print("Best method by MAE for each gap length:")
 print(mae.idxmin().to_string())
 print()
 print("Saved:", OUT_PATH.name)
+
+print()
+bias = results.pivot_table(index="method", columns="gap_hours", values="bias", aggfunc="mean").reindex(order)
+print("Mean signed error (ug/m3), prediction minus truth; positive = overestimates:")
+print(bias.round(1).to_string())
+print()
+long_gaps = results[(results["gap_hours"] >= 12) & results["method"].isin(["city_scaled", "city_anchored"])]
+print("Mean signed error for 12-24 h gaps, by city:")
+print(long_gaps.pivot_table(index="city", columns="method", values="bias", aggfunc="mean").round(1).to_string())
+print()
+long_gaps = long_gaps.assign(
+    level=pd.cut(long_gaps["y_mean"], [0, 50, 100, 200, 10_000],
+                 labels=["under 50", "50-100", "100-200", "over 200"]))
+print("Mean signed error for 12-24 h gaps, by true PM2.5 level during the gap:")
+print(long_gaps.pivot_table(index="level", columns="method", values="bias",
+                            aggfunc="mean", observed=True).round(1).to_string())
+print()
+print("Blocks per level (city_scaled):",
+      long_gaps[long_gaps["method"] == "city_scaled"]["level"].value_counts().sort_index().to_dict())
