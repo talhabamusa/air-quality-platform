@@ -6,9 +6,9 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SILVER_DIR = PROJECT_ROOT / "data" / "silver"
 
-df = pd.read_parquet(SILVER_DIR / "pm25_hourly_imputed.parquet")
+df = pd.read_parquet(SILVER_DIR / "pm25_hourly_imputed_clean.parquet")
 df = df.sort_values(["sensor_id", "hour_start_utc"]).reset_index(drop=True)
-gaps = pd.read_csv(SILVER_DIR / "pm25_gaps.csv")
+gaps = pd.read_csv(SILVER_DIR / "pm25_gaps_clean.csv")
 gaps["gap_start_utc"] = pd.to_datetime(gaps["gap_start_utc"], utc=True)
 
 observed = df[df["impute_method"] == "observed"]
@@ -84,7 +84,10 @@ for sid, g in by_sensor.items():
             "to": g["hour_start_utc"].iloc[start + n_run - 1].strftime("%m-%d %H:%M"),
         })
 print("Sensors with a run of 6+ identical readings:")
-print(pd.DataFrame(stuck).sort_values("run_hours", ascending=False).to_string(index=False))
+if stuck:
+    print(pd.DataFrame(stuck).sort_values("run_hours", ascending=False).to_string(index=False))
+else:
+    print("none")
 print()
 
 # ---- 3. Zeros and very high readings ----
