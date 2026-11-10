@@ -1,0 +1,94 @@
+version: 2
+
+models:
+  - name: dim_city
+    description: One row per city, with the city centre and the weather grid point used for it.
+    columns:
+      - name: city_key
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_station
+    description: One row per monitoring station that has readings or quarantined readings.
+    columns:
+      - name: station_key
+        data_tests:
+          - unique
+          - not_null
+      - name: sensor_id
+        data_tests:
+          - unique
+          - not_null
+      - name: city_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_city')
+                field: city_key
+
+  - name: dim_hour
+    description: One row per hour. hour_key is the UTC start of the PM2.5 hour, which is also 12:00 local time for the hour starting 06:30 UTC.
+    columns:
+      - name: hour_key
+        data_tests:
+          - unique
+          - not_null
+
+  - name: fact_air_quality
+    description: One row per sensor and hour, with the PM2.5 value after quality rules and imputation, and a quality tier.
+    columns:
+      - name: fact_key
+        data_tests:
+          - unique
+          - not_null
+      - name: hour_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_hour')
+                field: hour_key
+      - name: station_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_station')
+                field: station_key
+      - name: city_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_city')
+                field: city_key
+      - name: quality_tier
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['observed', 'imputed', 'imputed_low_confidence', 'missing']
+
+  - name: fact_weather
+    description: One row per city and hour. Weather is stamped at the midpoint of the PM2.5 hour that hour_key refers to.
+    columns:
+      - name: weather_key
+        data_tests:
+          - unique
+          - not_null
+      - name: hour_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_hour')
+                field: hour_key
+      - name: city_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_city')
+                field: city_key
