@@ -3,9 +3,10 @@ version: 2
 models:
   - name: mart_city_daily
     description: >
-      One row per city and local calendar day. Daily PM2.5 is the mean of per-sensor daily
-      means, using observed and imputed hours and leaving out low-confidence fills. A sensor-day
-      needs enough valid hours to count, which also drops the partial days at the edges.
+      One row per city and local calendar day. Daily PM2.5 is the mean (and median) of per-sensor
+      daily means, using observed and imputed hours and leaving out low-confidence fills. A
+      sensor-day needs enough valid hours, and a city-day needs enough sensors, to count. This
+      also drops the partial days at the edges and days when only one or two sensors reported.
     columns:
       - name: city_key
         description: City, joins to dim_city.
@@ -16,12 +17,14 @@ models:
         data_tests:
           - not_null
       - name: n_sensors
-        description: Number of sensors with enough valid hours that day.
+        description: Number of sensors with enough valid hours that day (at least 3).
         data_tests:
           - not_null
       - name: pm25_mean_ugm3
         description: Mean of the per-sensor daily mean PM2.5, in micrograms per cubic metre.
         data_tests:
           - not_null
+      - name: pm25_median_ugm3
+        description: Median of the per-sensor daily mean PM2.5, less sensitive to one unusual sensor.
       - name: weather_hours
         description: Hours of weather behind the daily weather columns (24 on a full day).

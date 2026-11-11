@@ -27,9 +27,11 @@ city_day as (
         city_key,
         date_local,
         count(*) as n_sensors,
-        avg(pm25_mean) as pm25_mean
+        avg(pm25_mean) as pm25_mean,
+        percentile_cont(0.5) within group (order by pm25_mean) as pm25_median
     from sensor_day
     group by 1, 2
+    having count(*) >= {{ var('min_sensors_per_city_day', 3) }}
 ),
 
 weather_day as (
@@ -52,6 +54,7 @@ select
     c.date_local,
     c.n_sensors,
     round(c.pm25_mean::numeric, 1) as pm25_mean_ugm3,
+    round(c.pm25_median::numeric, 1) as pm25_median_ugm3,
     wd.weather_hours,
     round(wd.temp_mean_c::numeric, 1) as temp_mean_c,
     round(wd.humidity_mean_pct::numeric, 1) as humidity_mean_pct,
