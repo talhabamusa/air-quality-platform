@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-BRONZE_DIR = PROJECT_ROOT / "data" / "bronze" / "open_meteo" / "archive"
+BRONZE_DIR = PROJECT_ROOT / "data" / "bronze" / "open_meteo" / "archive_long"
 SILVER_DIR = PROJECT_ROOT / "data" / "silver"
 OUT_PATH = SILVER_DIR / "weather_hourly.parquet"
 

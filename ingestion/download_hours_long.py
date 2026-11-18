@@ -30,14 +30,14 @@ MAX_CONSECUTIVE_FAILURES = 5
 WINDOW = {"from": WINDOW_FROM, "to": WINDOW_TO}
 
 
-def get_page(sensor_id, page):
+def get_page(sensor_id, page, date_from=WINDOW_FROM, date_to=WINDOW_TO):
     """One page of hourly data, retrying on rate limits, server errors and network errors."""
     for attempt in range(1, 6):
         try:
             response = requests.get(
                 f"{BASE_URL}/sensors/{sensor_id}/hours",
                 headers={"X-API-Key": API_KEY},
-                params={"datetime_from": WINDOW_FROM, "datetime_to": WINDOW_TO,
+                params={"datetime_from": date_from, "datetime_to": date_to,
                         "limit": LIMIT, "page": page},
                 timeout=60,
             )
@@ -68,11 +68,11 @@ def get_page(sensor_id, page):
     raise RuntimeError("gave up after 5 attempts")
 
 
-def fetch_all(sensor_id):
+def fetch_all(sensor_id, date_from=WINDOW_FROM, date_to=WINDOW_TO):
     """All pages for one sensor: keep asking until a page comes back short."""
     results, pages = [], 0
     for page in range(1, MAX_PAGES + 1):
-        payload = get_page(sensor_id, page)
+        payload = get_page(sensor_id, page, date_from, date_to)
         batch = payload.get("results", [])
         results.extend(batch)
         pages += 1
@@ -81,6 +81,16 @@ def fetch_all(sensor_id):
             return {"results": results}, pages
     raise RuntimeError(f"still getting full pages after {MAX_PAGES} pages")
 
+def fetch_chunked(sensor_id, n_chunks=4):
+    """Fallback: ask for the window in smaller time frames and join the results."""
+    fmt = "%Y-%m-%dT%H:%M:%SZ"
+    edges = pd.date_range(pd.Timestamp(WINDOW_FROM), pd.Timestamp(WINDOW_TO), periods=n_chunks + 1)
+    results, pages = [], 0
+    for start, end in zip(edges[:-1], edges[1:]):
+        payload, p = fetch_all(sensor_id, start.strftime(fmt), end.strftime(fmt))
+        results.extend(payload["results"])
+        pages += p
+    return {"results": results}, pages
 
 manifest = pd.read_csv(MANIFEST_PATH)
 if len(sys.argv) > 1:                       # test mode: python ...py 3
@@ -111,6 +121,9 @@ for i, row in enumerate(manifest.itertuples(), start=1):
 
     try:
         payload, pages = fetch_all(row.sensor_id)
+    except Exception as first_error:
+        print(f"    full-window request failed ({first_error}); retrying in smaller chunks")
+        payload, pages = fetch_chunked(row.sensor_id)
         n = len(payload["results"])
         status = "ok" if n else "empty"
 
