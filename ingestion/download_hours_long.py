@@ -28,6 +28,7 @@ LIMIT = 1000                 # rows per page
 MAX_PAGES = 20               # safety cap per sensor
 MAX_CONSECUTIVE_FAILURES = 5
 WINDOW = {"from": WINDOW_FROM, "to": WINDOW_TO}
+TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
 def get_page(sensor_id, page, date_from=WINDOW_FROM, date_to=WINDOW_TO):
@@ -81,16 +82,29 @@ def fetch_all(sensor_id, date_from=WINDOW_FROM, date_to=WINDOW_TO):
             return {"results": results}, pages
     raise RuntimeError(f"still getting full pages after {MAX_PAGES} pages")
 
+
 def fetch_chunked(sensor_id, n_chunks=4):
     """Fallback: ask for the window in smaller time frames and join the results."""
-    fmt = "%Y-%m-%dT%H:%M:%SZ"
     edges = pd.date_range(pd.Timestamp(WINDOW_FROM), pd.Timestamp(WINDOW_TO), periods=n_chunks + 1)
     results, pages = [], 0
     for start, end in zip(edges[:-1], edges[1:]):
-        payload, p = fetch_all(sensor_id, start.strftime(fmt), end.strftime(fmt))
+        payload, p = fetch_all(sensor_id, start.strftime(TIME_FORMAT), end.strftime(TIME_FORMAT))
         results.extend(payload["results"])
         pages += p
     return {"results": results}, pages
+
+
+def load_cached(path):
+    """The saved file for this sensor if it is readable and covers this window, else None."""
+    if not path.exists():
+        return None
+    try:
+        with gzip.open(path, "rt", encoding="utf-8") as f:
+            cached = json.load(f)
+    except Exception:
+        return None                      # unreadable or half-written: download again
+    return cached if cached.get("window") == WINDOW else None
+
 
 manifest = pd.read_csv(MANIFEST_PATH)
 if len(sys.argv) > 1:                       # test mode: python ...py 3
@@ -106,12 +120,7 @@ for i, row in enumerate(manifest.itertuples(), start=1):
     out_path = out_dir / f"sensor_id={row.sensor_id}.json.gz"
 
     # Safe to rerun: a sensor already saved for this exact window is not downloaded again
-    cached = None
-    if out_path.exists():
-        with gzip.open(out_path, "rt", encoding="utf-8") as f:
-            cached = json.load(f)
-        if cached.get("window") != WINDOW:
-            cached = None
+    cached = load_cached(out_path)
     if cached is not None:
         n = len(cached["response"]["results"])
         log.append({"city": row.city, "location_id": row.location_id, "sensor_id": row.sensor_id,
@@ -119,11 +128,14 @@ for i, row in enumerate(manifest.itertuples(), start=1):
                     "pages": cached.get("pages", 0), "from_cache": True})
         continue
 
+    n, pages, status = 0, 0, "failed"
     try:
-        payload, pages = fetch_all(row.sensor_id)
-    except Exception as first_error:
-        print(f"    full-window request failed ({first_error}); retrying in smaller chunks")
-        payload, pages = fetch_chunked(row.sensor_id)
+        try:
+            payload, pages = fetch_all(row.sensor_id)
+        except Exception as first_error:
+            print(f"    full-window request failed ({first_error}); retrying in smaller chunks")
+            payload, pages = fetch_chunked(row.sensor_id)
+
         n = len(payload["results"])
         status = "ok" if n else "empty"
 
@@ -138,8 +150,10 @@ for i, row in enumerate(manifest.itertuples(), start=1):
             "response": payload,
         }
         out_dir.mkdir(parents=True, exist_ok=True)
-        with gzip.open(out_path, "wt", encoding="utf-8") as f:
+        tmp_path = out_dir / f"sensor_id={row.sensor_id}.tmp"
+        with gzip.open(tmp_path, "wt", encoding="utf-8") as f:
             json.dump(record, f)
+        tmp_path.replace(out_path)           # rename only once the file is complete
         failures_in_a_row = 0
     except Exception as exc:
         n, pages, status = 0, 0, "failed"

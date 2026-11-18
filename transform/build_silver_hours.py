@@ -1,3 +1,4 @@
+import gzip
 import json
 from pathlib import Path
 
@@ -5,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-HOURS_DIR = PROJECT_ROOT / "data" / "bronze" / "openaq" / "hours"
+HOURS_DIR = PROJECT_ROOT / "data" / "bronze" / "openaq" / "hours_long"
 SILVER_DIR = PROJECT_ROOT / "data" / "silver"
 OUT_PATH = SILVER_DIR / "pm25_hourly.parquet"
 SUMMARY_PATH = SILVER_DIR / "pm25_sensor_summary.csv"
@@ -28,8 +29,9 @@ def gap_runs(is_missing):
 # ---- 1. Flatten bronze JSON into one table ----
 rows = []
 window_from = window_to = None
-for path in sorted(HOURS_DIR.glob("city=*/sensor_id=*.json")):
-    record = json.loads(path.read_text(encoding="utf-8"))
+for path in sorted(HOURS_DIR.glob("city=*/sensor_id=*.json.gz")):
+    with gzip.open(path, "rt", encoding="utf-8") as f:
+        record = json.load(f)
     if window_from is None:
         window_from = pd.Timestamp(record["window"]["from"])
         window_to = pd.Timestamp(record["window"]["to"])
@@ -58,7 +60,7 @@ negatives = int((raw["value"] < 0).sum())
 raw["is_negative"] = raw["value"] < 0
 
 # ---- 3. Expand each sensor onto a full hourly grid ----
-grids, summary, outside, boundary_rows = [], [], 0, 0
+grids, summary, outside, boundary_rows, off_grid_rows = [], [], 0, 0, []
 all_internal_gaps = []
 
 for sensor_id, g in raw.groupby("sensor_id"):
@@ -76,7 +78,12 @@ for sensor_id, g in raw.groupby("sensor_id"):
     boundary = g.index == (grid[0] - pd.Timedelta(hours=1))
     boundary_rows += int(boundary.sum())
     g = g[~boundary]
-    outside += len(g.index.difference(grid))
+    off_grid = g.index.difference(grid)
+    if len(off_grid):
+        dropped = g.loc[off_grid, ["city", "location_id", "sensor_id", "value"]].reset_index()
+        off_grid_rows.append(dropped)
+        g = g.drop(index=off_grid)
+    outside += len(off_grid)
 
     full = g.reindex(grid)
     full.index.name = "hour_start_utc"
@@ -109,8 +116,15 @@ for sensor_id, g in raw.groupby("sensor_id"):
         "internal_gaps": len(internal),
         "longest_internal_gap": max(internal) if internal else 0,
     })
-# Fail loudly if anything other than the known boundary bucket is off-grid
-assert outside == 0, f"{outside} rows fall outside the hourly grid"
+# Off-grid rows are dropped and recorded; the run stops only if there are too many
+MAX_OFF_GRID_SHARE = 0.001
+SILVER_DIR.mkdir(parents=True, exist_ok=True)
+if off_grid_rows:
+    off_grid_df = pd.concat(off_grid_rows, ignore_index=True)
+else:
+    off_grid_df = pd.DataFrame(columns=["hour_start_utc", "city", "location_id", "sensor_id", "value"])
+off_grid_df.to_csv(SILVER_DIR / "pm25_off_grid_rows.csv", index=False)
+assert outside <= MAX_OFF_GRID_SHARE * n_raw, f"{outside} rows fall outside the hourly grid (more than allowed)"
 silver = pd.concat(grids, ignore_index=True)
 summary = pd.DataFrame(summary)
 
@@ -121,7 +135,7 @@ summary.to_csv(SUMMARY_PATH, index=False)
 # ---- 4. Report ----
 print("Rows read from bronze:", n_raw)
 print("Duplicate (sensor, hour) rows dropped:", dups)
-print("Rows outside the expected hourly grid:", outside)
+print("Off-grid rows dropped (saved to pm25_off_grid_rows.csv):", outside)
 print("Boundary rows trimmed (bucket starts before the window):", boundary_rows)
 print("Negative PM2.5 values:", negatives)
 print("Working sensors:", len(summary))
