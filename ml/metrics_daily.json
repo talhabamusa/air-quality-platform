@@ -1,0 +1,41 @@
+{
+  "test_windows": [
+    [
+      "2026-07-08",
+      "2026-08-06"
+    ],
+    [
+      "2026-08-07",
+      "2026-09-05"
+    ],
+    [
+      "2026-09-06",
+      "2026-10-05"
+    ],
+    [
+      "2026-10-06",
+      "2026-11-04"
+    ]
+  ],
+  "pooled": {
+    "MAE": {
+      "persistence": 5.67,
+      "seasonal_naive": 10.78,
+      "mean7": 8.01,
+      "model": 6.29
+    },
+    "RMSE": {
+      "persistence": 10.14,
+      "seasonal_naive": 18.83,
+      "mean7": 15.78,
+      "model": 12.79
+    },
+    "MAE_vs_persistence_%": {
+      "persistence": 0.0,
+      "seasonal_naive": 90.15,
+      "mean7": 41.25,
+      "model": 10.99
+    }
+  },
+  "mean_target": 31.52
+}
