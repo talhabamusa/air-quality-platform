@@ -1,0 +1,50 @@
+{
+  "test_windows": [
+    [
+      "2026-07-08",
+      "2026-08-06"
+    ],
+    [
+      "2026-08-07",
+      "2026-09-05"
+    ],
+    [
+      "2026-09-06",
+      "2026-10-05"
+    ],
+    [
+      "2026-10-06",
+      "2026-11-04"
+    ]
+  ],
+  "pooled": {
+    "MAE": {
+      "persistence": 5.67,
+      "mean7": 8.01,
+      "level": 5.97,
+      "change": 5.82,
+      "change_oracle_weather": 5.24
+    },
+    "RMSE": {
+      "persistence": 10.14,
+      "mean7": 15.78,
+      "level": 11.74,
+      "change": 10.64,
+      "change_oracle_weather": 9.62
+    },
+    "better_than_persistence_%": {
+      "persistence": 0.0,
+      "mean7": 38.22,
+      "level": 48.35,
+      "change": 51.45,
+      "change_oracle_weather": 52.27
+    },
+    "MAE_vs_persistence_%": {
+      "persistence": 0.0,
+      "mean7": 41.25,
+      "level": 5.25,
+      "change": 2.64,
+      "change_oracle_weather": -7.52
+    }
+  }
+}
