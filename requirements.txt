@@ -1,0 +1,5 @@
+# Dependencies for the Streamlit dashboard (streamlit_app.py).
+# The data pipeline uses its own environments; see the README.
+streamlit
+pandas
+altair
