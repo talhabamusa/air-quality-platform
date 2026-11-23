@@ -101,6 +101,7 @@ for k, (start, end) in enumerate(folds, start=1):
     print(f"Fold {k}: test {start.date()} to {end.date()}   train rows {len(train)}   test rows {len(test)}")
 
 res = pd.concat(results, ignore_index=True)
+res.to_csv(ML_DIR / "backtest_predictions.csv", index=False)
 INTERVALS = {"band_persistence": ("band_lo", "band_hi"), "model_quantile": ("model_lo", "model_hi")}
 
 pooled = pd.DataFrame({name: interval_metrics(res["target"], res[lo], res[hi])
