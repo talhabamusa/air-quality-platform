@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dashboard dependencies and test tools
+        run: pip install -r requirements.txt pytest ruff
+      - name: Lint (syntax errors and undefined names only)
+        run: ruff check --select E9,F63,F7,F82 .
+      - name: Tests
+        run: pytest -q tests
+
+  dbt-parse:
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_USER: ci
+      POSTGRES_PASSWORD: ci
+      POSTGRES_DB: ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dbt
+        run: pip install dbt-core dbt-postgres
+      - name: Parse the dbt project
+        run: dbt parse --project-dir dbt_project --profiles-dir dbt_project
