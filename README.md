@@ -1,5 +1,7 @@
 # Air Quality Intelligence Platform
 
+![CI](https://github.com/talhabamusa/air-quality-platform/actions/workflows/ci.yml/badge.svg)
+
 An end-to-end data platform for air quality in five Indian cities (Delhi, Mumbai, Kolkata, Bengaluru, Chennai). It downloads hourly PM2.5 readings from OpenAQ and hourly weather from Open-Meteo, cleans them with explicit quality rules, models a PostgreSQL warehouse with dbt, analyses the data, forecasts next-day PM2.5 with tracked experiments, and serves the results in a dashboard.
 
 **Live dashboard:** [open the dashboard](https://YOUR-APP.streamlit.app) (a static snapshot, see Limitations)
