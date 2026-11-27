@@ -4,10 +4,10 @@
 
 An end-to-end data platform for air quality in five Indian cities (Delhi, Mumbai, Kolkata, Bengaluru, Chennai). It downloads hourly PM2.5 readings from OpenAQ and hourly weather from Open-Meteo, cleans them with explicit quality rules, models a PostgreSQL warehouse with dbt, analyses the data, forecasts next-day PM2.5 with tracked experiments, and serves the results in a dashboard.
 
-**Live dashboard:** [open the dashboard](https://YOUR-APP.streamlit.app) (a static snapshot, see Limitations)
+**Live dashboard:** [open the dashboard](https://air-quality-india-aq.streamlit.app) (a static snapshot, see Limitations)
 
 ## Highlights
-
+- **A clear seasonal signal:** Delhi's monthly mean PM2.5 was about six times higher in November 2025 than in August 2026, and the same winter-high, monsoon-low pattern shows in four other cities.
 - **12 months of hourly data** (Nov 2025 to Nov 2026): about 860,000 PM2.5 readings from 124 stations, plus hourly weather for each city.
 - **Real-world data problems found and handled**: half-hour timestamp offsets, frozen sensors, duplicate sensors, and a city average distorted by a single sensor (details below).
 - **Data quality is explicit**: every reading removed by a rule is kept in a quarantine table with the reason, and every filled hour carries a quality tier.
