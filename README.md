@@ -77,7 +77,7 @@ Built with dbt (core 1.12, PostgreSQL adapter 1.11), run against PostgreSQL 16 i
 - `mart_city_daily` (one row per city and day, with daily weather)
 - 36 data tests: keys, relationships, accepted values, and custom tests such as "missing hours carry no value", "observed values are unchanged" and "a city day needs at least 3 sensors"
 
-<!-- To add after running `dbt docs serve`: ![dbt lineage](docs/lineage.png) -->
+![dbt lineage](docs/lineage.png)
 
 ## Modelling
 
@@ -99,7 +99,7 @@ Built with dbt (core 1.12, PostgreSQL adapter 1.11), run against PostgreSQL 16 i
 
 ![Delhi forecast on the test windows](docs/forecast_delhi.png)
 
-<!-- To add after saving the screenshot: ![MLflow runs](docs/mlflow_runs.png) -->
+![MLflow runs](docs/mlflow_runs.png)
 
 ## Key findings from the data
 
@@ -202,6 +202,10 @@ The dbt step reads its database credentials from environment variables (`POSTGRE
 - Drift monitoring and a small forecast API
 - Continuous integration with GitHub Actions
 - A longer history, so that winter can be tested, and calibration of the prediction intervals on recent errors
+
+## License
+
+The code is released under the MIT License (see `LICENSE`). The data comes from OpenAQ and Open-Meteo and stays under their own terms.
 
 ## Acknowledgements
 
