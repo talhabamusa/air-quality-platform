@@ -103,7 +103,27 @@ Built with dbt (core 1.12, PostgreSQL adapter 1.11), run against PostgreSQL 16 i
 
 ## Key findings from the data
 
-<!-- TODO: add 3 or 4 findings from analysis/insights.py (seasonal pattern, daily cycle, weekday vs weekend, rainy vs dry days). Write them as descriptions, since the data covers one year and season affects both weather and pollution. -->
+These describe one year of data (6 November 2025 to 4 November 2026), so they show what happened in this year and not necessarily what happens every year. Season affects both the weather and the pollution, which makes causes hard to separate.
+
+**1. Pollution follows the seasons, and Delhi swings the most.** Delhi, Mumbai, Kolkata and Chennai were most polluted in November or December, and Delhi, Kolkata, Mumbai and Bengaluru were cleanest in July or August (Chennai's lowest month was April, at 19.2, with August almost as low at 19.4). Delhi's monthly mean fell from 226.6 ug/m3 in November 2025 to 36.2 in August 2026, about six times lower. Mumbai fell from 59.2 to 14.6, and Kolkata from 99.4 (December) to 21.5 (July). Bengaluru is the exception: its highest month was March (48.5). By October 2026 the build-up had started again, and Delhi's mean was 75.8, up from 40.3 in September.
+
+![Monthly PM2.5 by city](docs/monthly_pm25.png)
+
+**2. Every city has an afternoon low.** PM2.5 is lowest between 14:00 and 17:00 local time in all five cities. It peaks late in the evening in Delhi, Kolkata and Bengaluru (20:00 to 23:00) and in the morning in Chennai and Mumbai (08:00 to 09:00). Delhi has the largest swing, from 31% below its daily average in the afternoon to 18% above it at 23:00. The data shows the pattern but does not test why it happens.
+
+![Typical daily cycle](docs/hourly_profile.png)
+
+**3. There is no clear weekday and weekend difference.** Weekend means are within 3% of weekday means in all five cities, and the direction differs between cities (+2.5% in Delhi, -3.0% in Mumbai).
+
+**4. Rainy days are cleaner, but most of the gap is season.** On days with 1 mm of rain or more, PM2.5 was lower than on dry days in all five cities, by 11 to 70 ug/m3 over the year. Rain falls in the monsoon, when pollution is low anyway. Comparing rainy and dry days within the same month, the gap shrinks to about 9 to 13 ug/m3 in Bengaluru, Chennai, Delhi and Kolkata, and 2.5 in Mumbai (only 4 months qualified).
+
+![Dry days and rainy days](docs/rain_effect.png)
+
+**5. Daily weather correlates strongly with PM2.5, mostly through the seasons.** Over the year, daily PM2.5 has a Spearman correlation of -0.70 to -0.76 with humidity in Bengaluru, Kolkata and Mumbai, a similar correlation with rainfall in those three and in Delhi (-0.67 to -0.74), and -0.65 with temperature in Delhi. The humid, rainy, windy monsoon months are the cleanest and the cool, dry months the most polluted, so these numbers describe the seasonal cycle and do not show that weather causes the changes.
+
+**6. About 10% to 22% of sensor-hours are missing.** Measured readings make up 73% to 86% of sensor-hours, imputed hours 2.5% to 4.7% (plus 1.1% to 2.1% in the low-confidence tier), and the rest are missing. Bengaluru (21.9%) and Mumbai (20.1%) have the most missing data. These shares leave out the Chennai sensor that was removed entirely.
+
+![Data quality tiers by city](docs/data_quality.png)
 
 ## Dashboard
 
